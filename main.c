@@ -28,6 +28,7 @@ int main(void)
 
     SetTargetFPS(60);
 
+    // We assume this rectangle is a camera rectangle
     Rectangle cameraRec = { 10, 10, 200, 200 };
 
     Object* collidingObjects[MAX_COLLIDERS];
