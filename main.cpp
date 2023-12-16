@@ -104,7 +104,7 @@ int main(void)
 
         DrawFPS(0, 0);
         DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 100, 50,  21, BLACK);
-        DrawText(strObjects.append(to_string(GetPhysicsBodiesCount())).c_str(), 100, 100, 21, BLACK);
+        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(), 100, 100, 21, BLACK);
 
         ClearBackground(RAYWHITE);
 
