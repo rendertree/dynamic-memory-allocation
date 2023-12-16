@@ -93,7 +93,7 @@ int main(void)
         if (diffAlocHeap < 0) diffAlocHeap *= -1.0f;
 
         // The max of the diff is 2,
-        // Because there may be some delay with the physics system, we can't make it equal (but it's fine and safe),
+        // because there may be some delay with the physics system, we can't make it equal (but it's fine and safe),
         // and at least it's not more than 2.
         assert(diffAlocHeap < 2);
 
