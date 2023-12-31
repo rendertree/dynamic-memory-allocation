@@ -88,14 +88,14 @@ int main(void)
             }
         }
 
-        int diffAlocHeap = numCollidingObjects - GetPhysicsBodiesCount();
+        int diffAllocHeap = numCollidingObjects - GetPhysicsBodiesCount();
 
-        if (diffAlocHeap < 0) diffAlocHeap *= -1.0f;
+        if (diffAllocHeap < 0) diffAllocHeap *= -1.0f;
 
         // The max of the diff is 2,
         // because there may be some delay with the physics system, we can't make it equal (but it's fine and safe),
         // and at least it's not more than 2.
-        assert(diffAlocHeap < 2);
+        assert(diffAllocHeap < 2);
 
         string strPhysicsBody = { "Physics Body: " };
         string strObjects     = { "Objects: " };
