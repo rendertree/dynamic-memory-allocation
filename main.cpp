@@ -46,6 +46,8 @@ int main(void)
     
     shared_ptr<Object> collidingObjects[MAX_COLLIDERS];
     int numCollidingObjects = 0; // Variable to keep track of the number of colliding objects
+    int vertexCount = 0;
+    int bodiesCount = 0;
 
     for (int i = 0; i < MAX_COLLIDERS; i++)
     {
@@ -99,41 +101,45 @@ int main(void)
 
         string strPhysicsBody = { "Physics Body: " };
         string strObjects     = { "Objects: " };
-
+        string strVertices    = { "Vertices: " };
+        
         BeginDrawing();
 
         DrawFPS(0, 0);
-        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 100, 50,  21, BLACK);
-        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(), 100, 100, 21, BLACK);
+        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 100, 20,  21, BLACK);
+        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(), 100, 50, 21, BLACK);
+        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(), 100, 80, 21, BLACK);
 
         ClearBackground(RAYWHITE);
 
         for (int i = 0; i < numCollidingObjects; i++)
         {
-            DrawRectangleRec(
-                { collidingObjects[i]->body->position.x - collidingObjects[i]->rec.width / 2,
+            DrawRectangleRec({   
+                collidingObjects[i]->body->position.x - collidingObjects[i]->rec.width / 2,
                 collidingObjects[i]->body->position.y - collidingObjects[i]->rec.height / 2,
-                collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED);
-
+                collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
+            );
         }
 
-        int bodiesCount = GetPhysicsBodiesCount();
+        bodiesCount = GetPhysicsBodiesCount();
         for (int i = 0; i < bodiesCount; i++)
         {
             PhysicsBody body = GetPhysicsBody(i);
+            vertexCount = GetPhysicsShapeVerticesCount(i);
+            Vector2* vertices = new Vector2[vertexCount];
 
-            int vertexCount = GetPhysicsShapeVerticesCount(i);
             for (int j = 0; j < vertexCount; j++)
             {
-                // Get physics bodies shape vertices to draw lines
-                // Note: GetPhysicsShapeVertex() already calculates rotation transformations
-                Vector2 vertexA = GetPhysicsShapeVertex(body, j);
+                vertices[j] = GetPhysicsShapeVertex(body, j);
 
-                int jj = (((j + 1) < vertexCount) ? (j + 1) : 0);   // Get next vertex or first to close the shape
-                Vector2 vertexB = GetPhysicsShapeVertex(body, jj);
+                int jj = (((j + 1) < vertexCount) ? (j + 1) : 0); // Get next vertex or first to close the shape
+                Vector2 nextVertex = GetPhysicsShapeVertex(body, jj);
 
-                DrawLineV(vertexA, vertexB, GREEN);     // Draw a line between two vertex positions
+                DrawLineV(vertices[j], nextVertex, GREEN);
+                DrawCircleV(vertices[j], 3, BLUE);
             }
+            
+            delete[] vertices;
         }
 
         DrawRectangleLines(cameraRec.x, cameraRec.y, cameraRec.width, cameraRec.height, GREEN);
