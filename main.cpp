@@ -124,8 +124,8 @@ int main(void)
         bodiesCount = GetPhysicsBodiesCount();
         for (int i = 0; i < bodiesCount; i++)
         {
-            PhysicsBody body = GetPhysicsBody(i);
-            vertexCount = GetPhysicsShapeVerticesCount(i);
+            PhysicsBody body  = GetPhysicsBody(i);
+            vertexCount       = GetPhysicsShapeVerticesCount(i);
             Vector2* vertices = new Vector2[vertexCount];
 
             for (int j = 0; j < vertexCount; j++)
