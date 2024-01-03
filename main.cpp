@@ -210,6 +210,13 @@ int main(void)
             recData[i].width  = recSize;
         }
 
+        if (GuiButton((Rectangle){ uiSettingsLeft, 250, 50, 20}, "RESET"))
+        {
+            recSize = 100.0f;
+            recPosY = 350.0f;
+            cameraRec.width = 200.0f;
+        }
+
         cameraRec.height = cameraRec.width;
         cameraRec.x = GetMouseX() - cameraRec.width / 2;
         cameraRec.y = GetMouseY() - cameraRec.height / 2; 
