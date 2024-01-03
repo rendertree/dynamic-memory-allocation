@@ -56,7 +56,6 @@ int main(void)
 
     bool enabled = true;
     bool drawGrid = true;
-    bool lockObjects = false;
 
     float recSize = 100.0f;
     float recPosY = 350.0f;
@@ -71,30 +70,33 @@ int main(void)
         // Reset the counter for each frame
         numCollidingObjects = 0;
 
-        for (int i = 0; i < MAX_COLLIDERS; i++)
+        if (enabled)
         {
-            if (CheckCollisionRecs(cameraRec, recData[i]))
+            for (int i = 0; i < MAX_COLLIDERS; i++)
             {
-                // Collision detected, store the colliding object on the heap
-                auto newObject = make_shared<Object>();
-                
-                // Store the data
-                newObject->rec = recData[i];
-                newObject->body = CreatePhysicsBodyRectangle(
-                    (Vector2){ recData[i].x, recData[i].y },
-                    recData[i].width,
-                    recData[i].height, 
-                    12.0f 
-                );
-                collidingObjects[numCollidingObjects] = newObject;
-                numCollidingObjects++;
-            }
-            else 
-            {
-                // No collision, delete the physics body and reset the pointer
-                if (collidingObjects[i] != nullptr)
+                if (CheckCollisionRecs(cameraRec, recData[i]))
                 {
-                    collidingObjects[i].reset();
+                    // Collision detected, store the colliding object on the heap
+                    auto newObject = make_shared<Object>();
+                    
+                    // Store the data
+                    newObject->rec = recData[i];
+                    newObject->body = CreatePhysicsBodyRectangle(
+                        (Vector2){ recData[i].x, recData[i].y },
+                        recData[i].width,
+                        recData[i].height, 
+                        12.0f 
+                    );
+                    collidingObjects[numCollidingObjects] = newObject;
+                    numCollidingObjects++;
+                }
+                else 
+                {
+                    // No collision, delete the physics body and reset the pointer
+                    if (collidingObjects[i] != nullptr)
+                    {
+                        collidingObjects[i].reset();
+                    }
                 }
             }
         }
@@ -115,9 +117,6 @@ int main(void)
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
-
-        if (!enabled) lockObjects = true;
-        else lockObjects = false;
 
         if (enabled)
         {
@@ -151,12 +150,13 @@ int main(void)
                 delete[] vertices;
             }
         }
-        else if (lockObjects)
+        else
         {
             for (int i = 0; i < 4; i++)
             {   
                 const Rectangle rec = { recData[i].x - 50, recData[i].y - 50, recData[i].width, recData[i].height };
                 DrawRectangleRec(rec, RED);
+                DrawRectangleLinesEx(rec, 1.2f, GREEN);
             }
         }
 
