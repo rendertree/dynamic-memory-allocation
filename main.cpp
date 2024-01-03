@@ -1,24 +1,29 @@
 // by Wildan Wijanarko
 
 #include <stdio.h>
-#include "raylib.h"
 #include <cassert>
 #include <memory>
 #include <string>
 
+#include "raylib.h"
+#include "rlgl.h"
+#include "raymath.h"
+
 #define PHYSAC_IMPLEMENTATION
 #include "extras/physac.h"
 
-#define MAX_COLLIDERS 5
+#define RAYGUI_IMPLEMENTATION
+#include "extras/raygui.h"
+
+#define MAX_COLLIDERS 4
 
 using namespace std;
 
 Rectangle recData[MAX_COLLIDERS] = {
-    { 10 + 120.0f * 1,  200, 100, 100 },
-    { 10 + 120.0f * 2,  200, 100, 100 },
-    { 10 + 120.0f * 3,  200, 100, 100 },
-    { 10 + 120.0f * 4,  200, 100, 100 },
-    { 10 + 120.0f * 5,  200, 100, 100 },
+    { 3.0f + 98.0f * 1.0f + 52.0f * 0.0f,  350, 100, 100 },
+    { 3.0f + 98.0f * 2.0f + 52.0f * 1.0f,  350, 100, 100 },
+    { 3.0f + 98.0f * 3.0f + 52.0f * 2.0f,  350, 100, 100 },
+    { 3.0f + 98.0f * 4.0f + 52.0f * 3.0f,  350, 100, 100 },
 };
 
 struct Object
@@ -30,12 +35,12 @@ struct Object
 
     Rectangle rec;
     PhysicsBody body = nullptr;
-};
+}; 
 
 int main(void)
 {
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 720;
+    const int screenHeight = 480;
 
     InitWindow(screenWidth, screenHeight, "");
 
@@ -49,6 +54,13 @@ int main(void)
     int vertexCount = 0;
     int bodiesCount = 0;
 
+    bool enabled = true;
+    bool drawGrid = true;
+    bool lockObjects = false;
+
+    float recSize = 100.0f;
+    float recPosY = 350.0f;
+
     for (int i = 0; i < MAX_COLLIDERS; i++)
     {
         collidingObjects[i] = nullptr;
@@ -58,9 +70,6 @@ int main(void)
     {
         // Reset the counter for each frame
         numCollidingObjects = 0;
-
-        cameraRec.x = GetMouseX() - 100.0f;
-        cameraRec.y = GetMouseY() - 100.0f;
 
         for (int i = 0; i < MAX_COLLIDERS; i++)
         {
@@ -105,44 +114,105 @@ int main(void)
         
         BeginDrawing();
 
-        DrawFPS(0, 0);
-        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 100, 20,  21, BLACK);
-        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(), 100, 50, 21, BLACK);
-        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(), 100, 80, 21, BLACK);
-
         ClearBackground(RAYWHITE);
 
-        for (int i = 0; i < numCollidingObjects; i++)
+        if (!enabled) lockObjects = true;
+        else lockObjects = false;
+
+        if (enabled)
         {
-            DrawRectangleRec({   
-                collidingObjects[i]->body->position.x - collidingObjects[i]->rec.width / 2,
-                collidingObjects[i]->body->position.y - collidingObjects[i]->rec.height / 2,
-                collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
-            );
+            for (int i = 0; i < numCollidingObjects; i++)
+            {
+                DrawRectangleRec({   
+                    collidingObjects[i]->body->position.x - collidingObjects[i]->rec.width / 2,
+                    collidingObjects[i]->body->position.y - collidingObjects[i]->rec.height / 2,
+                    collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
+                );
+            }
+
+            bodiesCount = GetPhysicsBodiesCount();
+            for (int i = 0; i < bodiesCount; i++)
+            {
+                PhysicsBody body  = GetPhysicsBody(i);
+                vertexCount       = GetPhysicsShapeVerticesCount(i);
+                Vector2* vertices = new Vector2[vertexCount];
+
+                for (int j = 0; j < vertexCount; j++)
+                {
+                    vertices[j] = GetPhysicsShapeVertex(body, j);
+
+                    int jj = (((j + 1) < vertexCount) ? (j + 1) : 0); // Get next vertex or first to close the shape
+                    Vector2 nextVertex = GetPhysicsShapeVertex(body, jj);
+
+                    DrawLineV(vertices[j], nextVertex, GREEN);
+                    DrawCircleV(vertices[j], 3, YELLOW);
+                }
+                
+                delete[] vertices;
+            }
+        }
+        else if (lockObjects)
+        {
+            for (int i = 0; i < 4; i++)
+            {   
+                const Rectangle rec = { recData[i].x - 50, recData[i].y - 50, recData[i].width, recData[i].height };
+                DrawRectangleRec(rec, RED);
+            }
         }
 
-        bodiesCount = GetPhysicsBodiesCount();
-        for (int i = 0; i < bodiesCount; i++)
+        if (drawGrid)
         {
-            PhysicsBody body  = GetPhysicsBody(i);
-            vertexCount       = GetPhysicsShapeVerticesCount(i);
-            Vector2* vertices = new Vector2[vertexCount];
-
-            for (int j = 0; j < vertexCount; j++)
-            {
-                vertices[j] = GetPhysicsShapeVertex(body, j);
-
-                int jj = (((j + 1) < vertexCount) ? (j + 1) : 0); // Get next vertex or first to close the shape
-                Vector2 nextVertex = GetPhysicsShapeVertex(body, jj);
-
-                DrawLineV(vertices[j], nextVertex, GREEN);
-                DrawCircleV(vertices[j], 3, BLUE);
-            }
-            
-            delete[] vertices;
+            rlPushMatrix();
+            rlTranslatef(0, 25 * 50, 0);
+            rlRotatef(90, 1, 0, 0);
+            DrawGrid(100, 50);
+            rlPopMatrix();
         }
 
         DrawRectangleLines(cameraRec.x, cameraRec.y, cameraRec.width, cameraRec.height, GREEN);
+
+        float uiSettingsLeft = screenWidth - 150;
+
+        DrawFPS(0, 0);
+        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 20, 40,  21, BLACK);
+        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(),         20, 70,  21, BLACK);
+        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),  20, 100, 21, BLACK);
+
+        GuiGroupBox((Rectangle){ uiSettingsLeft - 10, 20, 150, 260 }, "Settings");
+        enabled  = GuiCheckBox((Rectangle){ uiSettingsLeft, 40, 20, 20 }, "Enabled", enabled);
+        drawGrid = GuiCheckBox((Rectangle){ uiSettingsLeft, 70, 20, 20 }, "Draw Grid", drawGrid);
+
+        cameraRec.width = GuiSliderBar(
+            (Rectangle){ uiSettingsLeft + 40, 110, 50, 15 }, 
+            "CamRec", 
+            TextFormat("%3.2f", cameraRec.width),
+            cameraRec.width,
+            10.0f, 450.0f);
+
+        recSize = GuiSliderBar(
+            (Rectangle){ uiSettingsLeft + 40, 130, 50, 15 }, 
+            "Rec", 
+            TextFormat("%3.2f", recSize),
+            recSize,
+            50.0f, 100.0f);
+        
+        recPosY = GuiSliderBar(
+            (Rectangle){ uiSettingsLeft + 40, 150, 50, 15 }, 
+            "RecY", 
+            TextFormat("%3.2f", recPosY),
+            recPosY,
+            180.0f, 354.0f);
+        
+        for (int i = 0; i < 4; i++)
+        {
+            recData[i].y      = recPosY;
+            recData[i].height = recSize;
+            recData[i].width  = recSize;
+        }
+
+        cameraRec.height = cameraRec.width;
+        cameraRec.x = GetMouseX() - cameraRec.width / 2;
+        cameraRec.y = GetMouseY() - cameraRec.height / 2; 
 
         EndDrawing();
     }
