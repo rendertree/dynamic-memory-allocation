@@ -26,6 +26,12 @@ Rectangle recData[MAX_COLLIDERS] = {
     { 3.0f + 98.0f * 4.0f + 52.0f * 3.0f,  350, 100, 100 },
 };
 
+const static inline void DrawBrick(
+    const Texture2D& texture, 
+    const Rectangle& rec,
+    const Vector2& pos
+);
+
 struct Object
 {
     ~Object()
@@ -33,9 +39,14 @@ struct Object
         DestroyPhysicsBody(body);
     }
 
+    inline void Draw(const Texture2D& texture) const 
+    {
+        DrawBrick(texture, rec, (Vector2){ body->position.x - 50.0f, body->position.y - 50.0f });
+    }
+
     Rectangle rec;
     PhysicsBody body = nullptr;
-}; 
+};
 
 int main(void)
 {
@@ -64,6 +75,8 @@ int main(void)
     {
         collidingObjects[i] = nullptr;
     }
+
+    Texture2D texture = LoadTexture("brick.png");
 
     while (!WindowShouldClose())
     {
@@ -127,6 +140,8 @@ int main(void)
                     collidingObjects[i]->body->position.y - collidingObjects[i]->rec.height / 2,
                     collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
                 );
+
+                collidingObjects[i]->Draw(texture);
             }
 
             bodiesCount = GetPhysicsBodiesCount();
@@ -157,6 +172,7 @@ int main(void)
                 const Rectangle rec = { recData[i].x - 50, recData[i].y - 50, recData[i].width, recData[i].height };
                 DrawRectangleRec(rec, RED);
                 DrawRectangleLinesEx(rec, 1.2f, GREEN);
+                DrawBrick(texture, rec, (Vector2){ rec.x, rec.y });
             }
         }
 
@@ -224,7 +240,21 @@ int main(void)
         EndDrawing();
     }
 
+    UnloadTexture(texture);
     CloseWindow();
 
     return 0;
+}
+
+const static inline void DrawBrick(
+    const Texture2D& texture, 
+    const Rectangle& rec,
+    const Vector2& pos)
+{
+    DrawTextureRec(
+        texture,
+        rec,
+        pos,
+        WHITE
+    );
 }
