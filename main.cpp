@@ -67,6 +67,7 @@ int main(void)
 
     bool enabled = true;
     bool drawGrid = true;
+    bool drawTexture = true;
 
     float recSize = 100.0f;
     float recPosY = 350.0f;
@@ -141,7 +142,10 @@ int main(void)
                     collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
                 );
 
-                collidingObjects[i]->Draw(texture);
+                if (drawTexture)
+                {
+                    collidingObjects[i]->Draw(texture);
+                }
             }
 
             bodiesCount = GetPhysicsBodiesCount();
@@ -172,7 +176,10 @@ int main(void)
                 const Rectangle rec = { recData[i].x - 50, recData[i].y - 50, recData[i].width, recData[i].height };
                 DrawRectangleRec(rec, RED);
                 DrawRectangleLinesEx(rec, 1.2f, GREEN);
-                DrawBrick(texture, rec, (Vector2){ rec.x, rec.y });
+                if (drawTexture)
+                {
+                    DrawBrick(texture, rec, (Vector2){ rec.x, rec.y });
+                }
             }
         }
 
@@ -195,25 +202,26 @@ int main(void)
         DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),  20, 100, 21, BLACK);
 
         GuiGroupBox((Rectangle){ uiSettingsLeft - 10, 20, 150, 260 }, "Settings");
-        enabled  = GuiCheckBox((Rectangle){ uiSettingsLeft, 40, 20, 20 }, "Enabled", enabled);
-        drawGrid = GuiCheckBox((Rectangle){ uiSettingsLeft, 70, 20, 20 }, "Draw Grid", drawGrid);
+        enabled     = GuiCheckBox((Rectangle){ uiSettingsLeft, 40 + 30 * 0, 20, 20 }, "Enabled", enabled);
+        drawGrid    = GuiCheckBox((Rectangle){ uiSettingsLeft, 40 + 30 * 1, 20, 20 }, "Draw Grid", drawGrid);
+        drawTexture = GuiCheckBox((Rectangle){ uiSettingsLeft, 40 + 30 * 2, 20, 20 }, "Draw Texture", drawTexture);
 
         cameraRec.width = GuiSliderBar(
-            (Rectangle){ uiSettingsLeft + 40, 110, 50, 15 }, 
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 0, 50, 15 }, 
             "CamRec", 
             TextFormat("%3.2f", cameraRec.width),
             cameraRec.width,
             10.0f, 450.0f);
 
         recSize = GuiSliderBar(
-            (Rectangle){ uiSettingsLeft + 40, 130, 50, 15 }, 
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 1, 50, 15 }, 
             "Rec", 
             TextFormat("%3.2f", recSize),
             recSize,
             50.0f, 100.0f);
         
         recPosY = GuiSliderBar(
-            (Rectangle){ uiSettingsLeft + 40, 150, 50, 15 }, 
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 2, 50, 15 }, 
             "RecY", 
             TextFormat("%3.2f", recPosY),
             recPosY,
