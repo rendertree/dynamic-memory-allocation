@@ -26,7 +26,7 @@ Rectangle recData[MAX_COLLIDERS] = {
     { 3.0f + 98.0f * 4.0f + 52.0f * 3.0f,  350, 100, 100 },
 };
 
-const static inline void DrawBrick(
+const static inline void DrawBrickTexture(
     const Texture2D& texture, 
     const Rectangle& rec,
     const Vector2& pos
@@ -41,7 +41,7 @@ struct Object
 
     inline void Draw(const Texture2D& texture) const 
     {
-        DrawBrick(texture, rec, (Vector2){ body->position.x - 50.0f, body->position.y - 50.0f });
+        DrawBrickTexture(texture, rec, (Vector2){ body->position.x - 50.0f, body->position.y - 50.0f });
     }
 
     Rectangle rec;
@@ -178,7 +178,7 @@ int main(void)
                 DrawRectangleLinesEx(rec, 1.2f, GREEN);
                 if (drawTexture)
                 {
-                    DrawBrick(texture, rec, (Vector2){ rec.x, rec.y });
+                    DrawBrickTexture(texture, rec, (Vector2){ rec.x, rec.y });
                 }
             }
         }
@@ -254,7 +254,7 @@ int main(void)
     return 0;
 }
 
-const static inline void DrawBrick(
+const static inline void DrawBrickTexture(
     const Texture2D& texture, 
     const Rectangle& rec,
     const Vector2& pos)
