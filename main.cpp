@@ -28,7 +28,7 @@ Rectangle recData[MAX_COLLIDERS] = {
 };
 
 const static inline void DrawBrickTexture(
-    const Texture2D& texture, 
+    const Texture2D* texture, 
     const Rectangle& rec,
     const Vector2& pos
 );
@@ -51,7 +51,7 @@ struct Object
         DestroyPhysicsBody(body);
     }
 
-    inline void Draw(const Texture2D& texture, float recSize) const 
+    inline void Draw(const Texture2D* texture, float recSize) const 
     {
         DrawBrickTexture(
             texture, 
@@ -118,7 +118,7 @@ int main(void)
     float recPosY = 350.0f;
     float recPosX = 50.0f;
 
-    Texture2D texture = LoadTexture("brick.png");
+    Texture2D* texture = new Texture2D(LoadTexture("brick.png"));
 
     ObjectAllocator allocator = { MAX_COLLIDERS };
 
@@ -155,6 +155,17 @@ int main(void)
                     }
                 }
             }
+        }
+
+        if (texture == nullptr && drawTexture) 
+        {
+            texture = new Texture2D(LoadTexture("brick.png"));
+        }
+        else if (texture != nullptr && !drawTexture) 
+        {
+            delete texture;
+
+            texture = nullptr;
         }
 
         // int diffAllocHeap = allocator.activeObjects - GetPhysicsBodiesCount();
@@ -301,19 +312,21 @@ int main(void)
         EndDrawing();
     }
 
-    UnloadTexture(texture);
+    UnloadTexture(*texture);
+    delete texture;
     CloseWindow();
 
     return 0;
 }
 
 const static inline void DrawBrickTexture(
-    const Texture2D& texture, 
+    const Texture2D* texture, 
     const Rectangle& rec,
     const Vector2& pos)
 {
+    if (texture != nullptr)
     DrawTextureRec(
-        texture,
+        *texture,
         rec,
         pos,
         WHITE
