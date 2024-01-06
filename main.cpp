@@ -60,7 +60,7 @@ struct ObjectAllocator
     {
         activeObjects = 0;
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < recsArrSize; i++)
         {
             if (CheckCollisionRecs(rec, recs[i]))
             {
@@ -196,7 +196,7 @@ int main(void)
         }
         else
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < MAX_COLLIDERS; i++)
             {   
                 const Rectangle rec = { recData[i].x - 50, recData[i].y - 50, recData[i].width, recData[i].height };
                 DrawRectangleRec(rec, RED);
@@ -223,7 +223,7 @@ int main(void)
 
         DrawFPS(0, 0);
         DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(),     20, 40,  21, BLACK);
-        DrawText(strObjects.append(to_string(allocator.activeObjects)).c_str(),   20, 70,  21, BLACK);
+        DrawText(strObjects.append(to_string(allocator.activeObjects)).c_str(),         20, 70,  21, BLACK);
         DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),      20, 100, 21, BLACK);
         DrawText(strHeapSize.append(to_string(allocator.size)).c_str(),                 20, 130, 21, BLACK);
 
