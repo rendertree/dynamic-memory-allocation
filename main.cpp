@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
-#include <array>
+#include <vector>
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -21,10 +21,10 @@
 using namespace std;
 
 Rectangle recData[MAX_COLLIDERS] = {
-    { 3.0f + 98.0f * 1.0f + 52.0f * 0.0f,  350, 100, 100 },
-    { 3.0f + 98.0f * 2.0f + 52.0f * 1.0f,  350, 100, 100 },
-    { 3.0f + 98.0f * 3.0f + 52.0f * 2.0f,  350, 100, 100 },
-    { 3.0f + 98.0f * 4.0f + 52.0f * 3.0f,  350, 100, 100 },
+    { 3.0f + 98.0f * 1 + 52.0f * 0, 350, 100, 100 },
+    { 3.0f + 98.0f * 2 + 52.0f * 1, 350, 100, 100 },
+    { 3.0f + 98.0f * 3 + 52.0f * 2, 350, 100, 100 },
+    { 3.0f + 98.0f * 4 + 52.0f * 3, 350, 100, 100 },
 };
 
 const static inline void DrawBrickTexture(
@@ -49,23 +49,23 @@ struct Object
     PhysicsBody body = nullptr;
 };
 
-template<size_t N>
 struct ObjectAllocator
 {
+    ObjectAllocator(unsigned n) : objectsVector(n) {}
     size_t size = 0;
-    int numCollidingObjects = 0; // Variable to keep track of the number of colliding objects
-    array<shared_ptr<Object>, N> objectsArray = {};
+    vector<shared_ptr<Object>> objectsVector = {};
+    int activeObjects = 0;
 
     void Update(Rectangle recs[], const Rectangle& rec, int recsArrSize)
     {
-        numCollidingObjects = 0;
+        activeObjects = 0;
 
         for (int i = 0; i < 4; i++)
         {
             if (CheckCollisionRecs(rec, recs[i]))
             {
                 // Collision detected, check if the object already exists
-                if (objectsArray[i] == nullptr)
+                if (objectsVector[i] == nullptr)
                 {
                     // If the object doesn't exist, create it and allocate memory on the heap
                     auto newObject = make_shared<Object>();
@@ -81,21 +81,21 @@ struct ObjectAllocator
                     size += sizeof(Object);
 
                     // Store the object in the array
-                    objectsArray[i] = newObject;
+                    objectsVector[i] = newObject;
                 }
                 // Increment the count of colliding objects
-                numCollidingObjects++;
+                activeObjects++;
             }
             else
             {
                 // No collision, delete the physics body and reset the pointer
-                if (objectsArray[i] != nullptr)
+                if (objectsVector[i] != nullptr)
                 {
                     // Decrease the heap size
                     size -= sizeof(Object);
 
                     // Release memory and reset the pointer
-                    objectsArray[i].reset();
+                    objectsVector[i].reset();
                 }
             }
         }
@@ -125,11 +125,11 @@ int main(void)
 
     Texture2D texture = LoadTexture("brick.png");
 
-    ObjectAllocator<MAX_COLLIDERS> allocator = {};
+    ObjectAllocator allocator = { MAX_COLLIDERS };
 
     for (int i = 0; i < MAX_COLLIDERS; i++)
     {
-        allocator.objectsArray[i] = nullptr;
+        allocator.objectsVector[i] = nullptr;
     }
 
     while (!WindowShouldClose())
@@ -139,14 +139,20 @@ int main(void)
             allocator.Update(recData, cameraRec, MAX_COLLIDERS);
         }
 
-        int diffAllocHeap = allocator.numCollidingObjects - GetPhysicsBodiesCount();
+        int diffAllocHeap = allocator.activeObjects - GetPhysicsBodiesCount();
 
         if (diffAllocHeap < 0) diffAllocHeap *= -1.0f;
 
         // The max of the diff is 2,
         // because there may be some delay with the physics system, we can't make it equal (but it's fine and safe),
         // and at least it's not more than 2.
-        assert(diffAllocHeap < 2);
+        // assert(diffAllocHeap < 2);
+
+        // UPDATE!!!
+        // Now we can make them equal, but I don't know why they can be equal. At least now, they can be equal
+        // Moral value learned:
+        // Don't blame others for your mistakes and wrongdoings
+        assert(allocator.activeObjects == GetPhysicsBodiesCount());
 
         string strPhysicsBody = { "Physics Body: " };
         string strObjects     = { "Objects: " };
@@ -156,6 +162,14 @@ int main(void)
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
+
+        for (auto it = allocator.objectsVector.begin(); it != allocator.objectsVector.end(); ++it)
+        {
+            if ((*it) != nullptr)
+            {
+                (*it)->Draw(texture);
+            }
+        }
 
         if (enabled)
         {
@@ -178,17 +192,6 @@ int main(void)
                 }
                 
                 delete[] vertices;
-
-                // DrawRectangleRec({   
-                //     allocator.objectsArray[i]->body->position.x - allocator.objectsArray[i]->rec.width / 2,
-                //     allocator.objectsArray[i]->body->position.y - allocator.objectsArray[i]->rec.height / 2,
-                //     allocator.objectsArray[i]->rec.width, allocator.objectsArray[i]->rec.height }, RED
-                // );
-
-                if (drawTexture)
-                {
-                    allocator.objectsArray[i]->Draw(texture);
-                }
             }
         }
         else
@@ -220,7 +223,7 @@ int main(void)
 
         DrawFPS(0, 0);
         DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(),     20, 40,  21, BLACK);
-        DrawText(strObjects.append(to_string(allocator.numCollidingObjects)).c_str(),   20, 70,  21, BLACK);
+        DrawText(strObjects.append(to_string(allocator.activeObjects)).c_str(),   20, 70,  21, BLACK);
         DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),      20, 100, 21, BLACK);
         DrawText(strHeapSize.append(to_string(allocator.size)).c_str(),                 20, 130, 21, BLACK);
 
