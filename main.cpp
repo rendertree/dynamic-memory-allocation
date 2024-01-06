@@ -35,6 +35,17 @@ const static inline void DrawBrickTexture(
 
 struct Object
 {
+    Object(const Rectangle& recData)
+    {
+        rec = recData;
+        body = CreatePhysicsBodyRectangle(
+            (Vector2){ recData.x, recData.y },
+            recData.width,
+            recData.height,
+            12.0f
+        );
+    }
+
     ~Object()
     {
         DestroyPhysicsBody(body);
@@ -42,7 +53,12 @@ struct Object
 
     inline void Draw(const Texture2D& texture, float recSize) const 
     {
-        DrawBrickTexture(texture, rec, (Vector2){ body->position.x - recSize / 2.0f, body->position.y - recSize / 2.0f });
+        DrawBrickTexture(
+            texture, 
+            rec, 
+            (Vector2){ body->position.x - recSize / 2.0f, 
+            body->position.y - recSize / 2.0f }
+        );
     }
 
     Rectangle rec;
@@ -52,53 +68,31 @@ struct Object
 struct ObjectAllocator
 {
     ObjectAllocator(unsigned n) : objectsVector(n) {}
-    size_t size = 0;
     vector<shared_ptr<Object>> objectsVector = {};
     int activeObjects = 0;
+    size_t size = 0;
 
-    void Update(Rectangle recs[], const Rectangle& rec, int recsArrSize)
+    // Allocate a new Object and store it in the objectsVector
+    void AllocateObject(const Rectangle& recData, unsigned i)
     {
-        activeObjects = 0;
+        // If the object doesn't exist, create it and allocate memory on the heap
+        auto newObject = make_shared<Object>(recData);
 
-        for (int i = 0; i < recsArrSize; i++)
-        {
-            if (CheckCollisionRecs(rec, recs[i]))
-            {
-                // Collision detected, check if the object already exists
-                if (objectsVector[i] == nullptr)
-                {
-                    // If the object doesn't exist, create it and allocate memory on the heap
-                    auto newObject = make_shared<Object>();
-                    newObject->rec = recData[i];
-                    newObject->body = CreatePhysicsBodyRectangle(
-                        (Vector2){ recData[i].x, recData[i].y },
-                        recData[i].width,
-                        recData[i].height,
-                        12.0f
-                    );
+        // Increase the heap size
+        size += sizeof(Object);
 
-                    // Increase the heap size
-                    size += sizeof(Object);
+        // Store the object in the vector
+        objectsVector[i] = newObject;
+    }
 
-                    // Store the object in the array
-                    objectsVector[i] = newObject;
-                }
-                // Increment the count of colliding objects
-                activeObjects++;
-            }
-            else
-            {
-                // No collision, delete the physics body and reset the pointer
-                if (objectsVector[i] != nullptr)
-                {
-                    // Decrease the heap size
-                    size -= sizeof(Object);
+    // Deallocate an Object at a specific index
+    void DeallocateObject(unsigned i) 
+    {
+        // Decrease the heap size
+        size -= sizeof(Object);
 
-                    // Release memory and reset the pointer
-                    objectsVector[i].reset();
-                }
-            }
-        }
+        // Release memory and reset the pointer
+        objectsVector[i].reset();
     }
 };
 
@@ -135,9 +129,32 @@ int main(void)
 
     while (!WindowShouldClose())
     {
+        vector<shared_ptr<Object>>* objectsVector = &allocator.objectsVector;
+
         if (enabled)
         {
-            allocator.Update(recData, cameraRec, MAX_COLLIDERS);
+            allocator.activeObjects = 0;
+            for (int i = 0; i < MAX_COLLIDERS; i++)
+            {
+                if (CheckCollisionRecs(cameraRec, recData[i]))
+                {
+                    // Collision detected, check if the object already exists
+                    if (objectsVector->at(i) == nullptr)
+                    {
+                        allocator.AllocateObject(recData[i], i);
+                    }
+                    // Increment the count of colliding objects
+                    allocator.activeObjects++;
+                }
+                else
+                {
+                    // No collision, delete the physics body and reset the pointer
+                    if (objectsVector->at(i) != nullptr)
+                    {
+                        allocator.DeallocateObject(i);
+                    }
+                }
+            }
         }
 
         int diffAllocHeap = allocator.activeObjects - GetPhysicsBodiesCount();
@@ -159,8 +176,6 @@ int main(void)
         string strObjects     = { "Objects: " };
         string strVertices    = { "Vertices: " };
         string strHeapSize    = { "Heap Size: " };
-
-        vector<shared_ptr<Object>>* objectsVector = &allocator.objectsVector;
         
         BeginDrawing();
 
@@ -225,10 +240,10 @@ int main(void)
         float uiSettingsLeft = screenWidth - 150;
 
         DrawFPS(0, 0);
-        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(),     20, 40,  21, BLACK);
-        DrawText(strObjects.append(to_string(allocator.activeObjects)).c_str(),         20, 70,  21, BLACK);
-        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),      20, 100, 21, BLACK);
-        DrawText(strHeapSize.append(to_string(allocator.size)).c_str(),                 20, 130, 21, BLACK);
+        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(),     20, 40 + 30 * 0,  21, BLACK);
+        DrawText(strObjects.append(to_string(allocator.activeObjects)).c_str(),         20, 40 + 30 * 1,  21, BLACK);
+        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),      20, 40 + 30 * 2,  21, BLACK);
+        DrawText(strHeapSize.append(to_string(allocator.size)).c_str(),                 20, 40 + 30 * 3,  21, BLACK);
 
         GuiGroupBox((Rectangle){ uiSettingsLeft - 10, 20, 150, 260 }, "Settings");
         enabled     = GuiCheckBox((Rectangle){ uiSettingsLeft, 40 + 30 * 0, 20, 20 }, "Enabled", enabled);
