@@ -157,9 +157,9 @@ int main(void)
             }
         }
 
-        int diffAllocHeap = allocator.activeObjects - GetPhysicsBodiesCount();
+        // int diffAllocHeap = allocator.activeObjects - GetPhysicsBodiesCount();
 
-        if (diffAllocHeap < 0) diffAllocHeap *= -1.0f;
+        // if (diffAllocHeap < 0) diffAllocHeap *= -1.0f;
 
         // The max of the diff is 2,
         // because there may be some delay with the physics system, we can't make it equal (but it's fine and safe),
