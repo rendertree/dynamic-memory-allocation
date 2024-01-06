@@ -40,9 +40,9 @@ struct Object
         DestroyPhysicsBody(body);
     }
 
-    inline void Draw(const Texture2D& texture) const 
+    inline void Draw(const Texture2D& texture, float recSize) const 
     {
-        DrawBrickTexture(texture, rec, (Vector2){ body->position.x - 50.0f, body->position.y - 50.0f });
+        DrawBrickTexture(texture, rec, (Vector2){ body->position.x - recSize / 2.0f, body->position.y - recSize / 2.0f });
     }
 
     Rectangle rec;
@@ -122,6 +122,7 @@ int main(void)
 
     float recSize = 100.0f;
     float recPosY = 350.0f;
+    float recPosX = 50.0f;
 
     Texture2D texture = LoadTexture("brick.png");
 
@@ -158,16 +159,18 @@ int main(void)
         string strObjects     = { "Objects: " };
         string strVertices    = { "Vertices: " };
         string strHeapSize    = { "Heap Size: " };
+
+        vector<shared_ptr<Object>>* objectsVector = &allocator.objectsVector;
         
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
 
-        for (auto it = allocator.objectsVector.begin(); it != allocator.objectsVector.end(); ++it)
+        for (auto it = objectsVector->begin(); it != objectsVector->end(); it++)
         {
-            if ((*it) != nullptr)
+            if ((*it) != nullptr) 
             {
-                (*it)->Draw(texture);
+                (*it)->Draw(texture, ((*it)->rec.width + (*it)->rec.height) / 2);
             }
         }
 
@@ -252,9 +255,19 @@ int main(void)
             TextFormat("%3.2f", recPosY),
             recPosY,
             180.0f, 354.0f);
+
+        recPosX = GuiSliderBar(
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 3, 50, 15 }, 
+            "RecX", 
+            TextFormat("%3.2f", recPosX),
+            recPosX,
+            50.0f, 220.0f);
         
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < MAX_COLLIDERS; i++)
         {
+            float dx = recPosX + 150 * i;
+
+            recData[i].x      = dx;
             recData[i].y      = recPosY;
             recData[i].height = recSize;
             recData[i].width  = recSize;
