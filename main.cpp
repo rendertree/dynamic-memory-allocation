@@ -4,6 +4,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
+#include <array>
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -48,6 +49,59 @@ struct Object
     PhysicsBody body = nullptr;
 };
 
+template<size_t N>
+struct ObjectAllocator
+{
+    size_t size = 0;
+    int numCollidingObjects = 0; // Variable to keep track of the number of colliding objects
+    array<shared_ptr<Object>, N> objectsArray = {};
+
+    void Update(Rectangle recs[], const Rectangle& rec, int recsArrSize)
+    {
+        numCollidingObjects = 0;
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (CheckCollisionRecs(rec, recs[i]))
+            {
+                // Collision detected, check if the object already exists
+                if (objectsArray[i] == nullptr)
+                {
+                    // If the object doesn't exist, create it and allocate memory on the heap
+                    auto newObject = make_shared<Object>();
+                    newObject->rec = recData[i];
+                    newObject->body = CreatePhysicsBodyRectangle(
+                        (Vector2){ recData[i].x, recData[i].y },
+                        recData[i].width,
+                        recData[i].height,
+                        12.0f
+                    );
+
+                    // Increase the heap size
+                    size += sizeof(Object);
+
+                    // Store the object in the array
+                    objectsArray[i] = newObject;
+                }
+                // Increment the count of colliding objects
+                numCollidingObjects++;
+            }
+            else
+            {
+                // No collision, delete the physics body and reset the pointer
+                if (objectsArray[i] != nullptr)
+                {
+                    // Decrease the heap size
+                    size -= sizeof(Object);
+
+                    // Release memory and reset the pointer
+                    objectsArray[i].reset();
+                }
+            }
+        }
+    }
+};
+
 int main(void)
 {
     const int screenWidth = 720;
@@ -59,9 +113,6 @@ int main(void)
 
     // We assume this rectangle is a camera rectangle
     Rectangle cameraRec = { 10, 10, 200, 200 };
-    
-    shared_ptr<Object> collidingObjects[MAX_COLLIDERS];
-    int numCollidingObjects = 0; // Variable to keep track of the number of colliding objects
     int vertexCount = 0;
     int bodiesCount = 0;
 
@@ -72,50 +123,23 @@ int main(void)
     float recSize = 100.0f;
     float recPosY = 350.0f;
 
+    Texture2D texture = LoadTexture("brick.png");
+
+    ObjectAllocator<MAX_COLLIDERS> allocator = {};
+
     for (int i = 0; i < MAX_COLLIDERS; i++)
     {
-        collidingObjects[i] = nullptr;
+        allocator.objectsArray[i] = nullptr;
     }
-
-    Texture2D texture = LoadTexture("brick.png");
 
     while (!WindowShouldClose())
     {
-        // Reset the counter for each frame
-        numCollidingObjects = 0;
-
         if (enabled)
         {
-            for (int i = 0; i < MAX_COLLIDERS; i++)
-            {
-                if (CheckCollisionRecs(cameraRec, recData[i]))
-                {
-                    // Collision detected, store the colliding object on the heap
-                    auto newObject = make_shared<Object>();
-                    
-                    // Store the data
-                    newObject->rec = recData[i];
-                    newObject->body = CreatePhysicsBodyRectangle(
-                        (Vector2){ recData[i].x, recData[i].y },
-                        recData[i].width,
-                        recData[i].height, 
-                        12.0f 
-                    );
-                    collidingObjects[numCollidingObjects] = newObject;
-                    numCollidingObjects++;
-                }
-                else 
-                {
-                    // No collision, delete the physics body and reset the pointer
-                    if (collidingObjects[i] != nullptr)
-                    {
-                        collidingObjects[i].reset();
-                    }
-                }
-            }
+            allocator.Update(recData, cameraRec, MAX_COLLIDERS);
         }
 
-        int diffAllocHeap = numCollidingObjects - GetPhysicsBodiesCount();
+        int diffAllocHeap = allocator.numCollidingObjects - GetPhysicsBodiesCount();
 
         if (diffAllocHeap < 0) diffAllocHeap *= -1.0f;
 
@@ -127,6 +151,7 @@ int main(void)
         string strPhysicsBody = { "Physics Body: " };
         string strObjects     = { "Objects: " };
         string strVertices    = { "Vertices: " };
+        string strHeapSize    = { "Heap Size: " };
         
         BeginDrawing();
 
@@ -134,20 +159,6 @@ int main(void)
 
         if (enabled)
         {
-            for (int i = 0; i < numCollidingObjects; i++)
-            {
-                DrawRectangleRec({   
-                    collidingObjects[i]->body->position.x - collidingObjects[i]->rec.width / 2,
-                    collidingObjects[i]->body->position.y - collidingObjects[i]->rec.height / 2,
-                    collidingObjects[i]->rec.width, collidingObjects[i]->rec.height }, RED
-                );
-
-                if (drawTexture)
-                {
-                    collidingObjects[i]->Draw(texture);
-                }
-            }
-
             bodiesCount = GetPhysicsBodiesCount();
             for (int i = 0; i < bodiesCount; i++)
             {
@@ -167,6 +178,17 @@ int main(void)
                 }
                 
                 delete[] vertices;
+
+                // DrawRectangleRec({   
+                //     allocator.objectsArray[i]->body->position.x - allocator.objectsArray[i]->rec.width / 2,
+                //     allocator.objectsArray[i]->body->position.y - allocator.objectsArray[i]->rec.height / 2,
+                //     allocator.objectsArray[i]->rec.width, allocator.objectsArray[i]->rec.height }, RED
+                // );
+
+                if (drawTexture)
+                {
+                    allocator.objectsArray[i]->Draw(texture);
+                }
             }
         }
         else
@@ -197,9 +219,10 @@ int main(void)
         float uiSettingsLeft = screenWidth - 150;
 
         DrawFPS(0, 0);
-        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(), 20, 40,  21, BLACK);
-        DrawText(strObjects.append(to_string(numCollidingObjects)).c_str(),         20, 70,  21, BLACK);
-        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),  20, 100, 21, BLACK);
+        DrawText(strPhysicsBody.append(to_string(GetPhysicsBodiesCount())).c_str(),     20, 40,  21, BLACK);
+        DrawText(strObjects.append(to_string(allocator.numCollidingObjects)).c_str(),   20, 70,  21, BLACK);
+        DrawText(strVertices.append(to_string(vertexCount * bodiesCount)).c_str(),      20, 100, 21, BLACK);
+        DrawText(strHeapSize.append(to_string(allocator.size)).c_str(),                 20, 130, 21, BLACK);
 
         GuiGroupBox((Rectangle){ uiSettingsLeft - 10, 20, 150, 260 }, "Settings");
         enabled     = GuiCheckBox((Rectangle){ uiSettingsLeft, 40 + 30 * 0, 20, 20 }, "Enabled", enabled);
