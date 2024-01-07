@@ -1,4 +1,6 @@
+The article -> [https://hesoyam-3x.blogspot.com/2024/01/memantau-ukuran-heap.html](https://hesoyam-3x.blogspot.com/2024/01/memantau-ukuran-heap.html)
 
 
-https://github.com/helix-engine/dynamic-memory-allocation/assets/32849384/56a93341-f26b-4fde-a08f-270d8e8d333a
+
+https://github.com/shadow-heap/dynamic-memory-allocation/assets/32849384/941ecc2b-c25c-4142-a00c-32867092020a
 
