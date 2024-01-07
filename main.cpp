@@ -76,23 +76,29 @@ struct ObjectAllocator
     void AllocateObject(const Rectangle& recData, unsigned i)
     {
         // If the object doesn't exist, create it and allocate memory on the heap
-        auto newObject = make_shared<Object>(recData);
+        if (objectsVector[i] == nullptr)
+        {
+            auto newObject = make_shared<Object>(recData);
 
-        // Increase the heap size
-        size += sizeof(Object);
+            // Store the object in the vector
+            objectsVector[i] = newObject;
 
-        // Store the object in the vector
-        objectsVector[i] = newObject;
+            // Increase the heap size
+            size += sizeof(Object);
+        }
     }
 
     // Deallocate an Object at a specific index
     void DeallocateObject(unsigned i) 
     {
-        // Decrease the heap size
-        size -= sizeof(Object);
+        if (objectsVector[i] != nullptr)
+        {
+            // Decrease the heap size
+            size -= sizeof(Object);
 
-        // Release memory and reset the pointer
-        objectsVector[i].reset();
+            // Release memory and reset the pointer
+            objectsVector[i].reset();
+        }
     }
 };
 
@@ -138,21 +144,13 @@ int main(void)
             {
                 if (CheckCollisionRecs(cameraRec, recData[i]))
                 {
-                    // Collision detected, check if the object already exists
-                    if (objectsVector->at(i) == nullptr)
-                    {
-                        allocator.AllocateObject(recData[i], i);
-                    }
-                    // Increment the count of colliding objects
+                    allocator.AllocateObject(recData[i], i);
                     allocator.activeObjects++;
                 }
                 else
                 {
                     // No collision, delete the physics body and reset the pointer
-                    if (objectsVector->at(i) != nullptr)
-                    {
-                        allocator.DeallocateObject(i);
-                    }
+                    allocator.DeallocateObject(i);
                 }
             }
         }
