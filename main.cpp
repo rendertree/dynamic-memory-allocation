@@ -104,7 +104,7 @@ struct ObjectAllocator
 
 int main(void)
 {
-    const int screenWidth = 720;
+    const int screenWidth  = 720;
     const int screenHeight = 480;
 
     InitWindow(screenWidth, screenHeight, "");
@@ -116,13 +116,13 @@ int main(void)
     int vertexCount = 0;
     int bodiesCount = 0;
 
-    bool enabled = true;
-    bool drawGrid = true;
-    bool drawTexture = true;
+    bool enabled        = true;
+    bool drawGrid       = true;
+    bool drawTexture    = true;
 
     float recSize = 100.0f;
-    float recPosY = 350.0f;
     float recPosX = 50.0f;
+    float recPosY = 350.0f;
 
     Texture2D* texture = new Texture2D(LoadTexture("brick.png"));
 
@@ -272,19 +272,19 @@ int main(void)
             recSize,
             50.0f, 100.0f);
         
-        recPosY = GuiSliderBar(
-            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 2, 50, 15 }, 
-            "RecY", 
-            TextFormat("%3.2f", recPosY),
-            recPosY,
-            180.0f, 354.0f);
-
         recPosX = GuiSliderBar(
-            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 3, 50, 15 }, 
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 2, 50, 15 }, 
             "RecX", 
             TextFormat("%3.2f", recPosX),
             recPosX,
             50.0f, 220.0f);
+        
+        recPosY = GuiSliderBar(
+            (Rectangle){ uiSettingsLeft + 40, 130 + 20 * 3, 50, 15 }, 
+            "RecY", 
+            TextFormat("%3.2f", recPosY),
+            recPosY,
+            180.0f, 354.0f);
         
         for (int i = 0; i < MAX_COLLIDERS; i++)
         {
